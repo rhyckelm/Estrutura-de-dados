@@ -27,7 +27,7 @@ void adicionar()
     printf("Digite o cpf: ");
     scanf("%d", &novo->cpf);
     printf("Digite a data do ingresso: ");
-    scanf("%d", &(novo->ingresso)->data);
+    scanf("%d", &(novo)->ingresso->data);
 
     novo->prox = nullptr;
 
@@ -74,8 +74,8 @@ Node *buscar()
     printf("O cpf digitado nao existe!!");
     return nullptr;
 }
-//2 -> 1
-//1 -> 2
+// 2 -> 1
+// 1 -> 2
 //
 void inserir_ingresso()
 {
@@ -86,9 +86,27 @@ void inserir_ingresso()
     ingresso *newTicket = new ingresso;
     printf("Digite a data do ingresso: ");
     scanf("%d", &newTicket->data);
-    newTicket->proxi = aux->ingresso;
-    aux->ingresso = newTicket;
+    newTicket->proxi = nullptr;
+
+    // Se a lista de ingressos ainda não existir, cria o primeiro nó
+    if (aux->ingresso == nullptr)
+    {
+        aux->ingresso = newTicket;
+    }
+    else
+    {
+        // Encontra o último nó na lista de ingressos
+        ingresso *lastTicket = aux->ingresso;
+        while (lastTicket->proxi != nullptr)
+        {
+            lastTicket = lastTicket->proxi;
+        }
+
+        // Insere o novo nó no final da lista
+        lastTicket->proxi = newTicket;
+    }
 }
+
 /*
 void insertionSort()
 {
