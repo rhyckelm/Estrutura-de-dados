@@ -4,7 +4,7 @@
 
 struct ingresso
 {
-    int data[10];
+    int data = 0;
     ingresso *proxi;
 };
 
@@ -12,7 +12,7 @@ struct Node
 {
     char nome[30];
     int cpf = 0;
-    ingresso ingresso;
+    ingresso *ingresso;
     Node *prox;
 };
 
@@ -27,7 +27,8 @@ void adicionar()
     printf("Digite o cpf: ");
     scanf("%d", &novo->cpf);
     printf("Digite a data do ingresso: ");
-    scanf("%d", &novo->ingresso.data);
+    scanf("%d", &(novo->ingresso)->data);
+
     novo->prox = nullptr;
 
     if (cabeca == nullptr)
@@ -50,7 +51,7 @@ void imprimir()
     Node *aux = cabeca;
     while (aux != nullptr)
     {
-        printf("Nome: %s\nCpf: %d \nIngressos: %d", aux->nome, aux->cpf, aux->ingresso);
+        printf("Nome: %s\nCpf: %d \nIngressos: %d\n==========\n", aux->nome, aux->cpf, aux->ingresso->data);
         aux = aux->prox;
     }
 }
@@ -60,7 +61,7 @@ Node *buscar()
     Node *aux = cabeca;
     int cpf = 0;
     printf("Digite o cpf: ");
-    scanf("%d", cpf);
+    scanf("%d", &cpf);
 
     while (aux != nullptr)
     {
@@ -73,22 +74,22 @@ Node *buscar()
     printf("O cpf digitado nao existe!!");
     return nullptr;
 }
-
+//2 -> 1
+//1 -> 2
+//
 void inserir_ingresso()
 {
+    // encontra o nó com o cpf especificado
     Node *aux = buscar();
-    if (aux->cpf != NULL)
-    {
-        printf("Esse cpf ja possui um ou mais ingressos.\n");
-    }
-    int bilhete = 0;
-    printf("Digite a data do novo ingresso: ");
-    scanf("%d", &bilhete);
-    while (aux->ingresso.data){
-        
-    }
-}
 
+    // cria um novo ingresso e adiciona à lista de ingressos para este nó
+    ingresso *newTicket = new ingresso;
+    printf("Digite a data do ingresso: ");
+    scanf("%d", &newTicket->data);
+    newTicket->proxi = aux->ingresso;
+    aux->ingresso = newTicket;
+}
+/*
 void insertionSort()
 {
     Node *ordenar = nullptr;
@@ -120,7 +121,7 @@ void insertionSort()
     // Atualiza o ponteiro para o primeiro nó da lista original
     cabeca = ordenar;
 }
-
+*/
 /*
 void deletar()
 {
@@ -142,9 +143,9 @@ int main(int argc, char const *argv[])
     do
     {
         printf("----- MENU -----\n");
-        printf("1 - Opcao 1\n");
-        printf("2 - Opcao 2\n");
-        printf("3 - Opcao 3\n");
+        printf("1 - comprar ingresso.\n");
+        printf("2 - imprimir bilhete\n");
+        printf("3 - Comprar outro ingresso.\n");
         printf("0 - Sair\n");
 
         printf("Digite a opcao desejada: ");
