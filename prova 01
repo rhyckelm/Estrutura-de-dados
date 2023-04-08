@@ -1,0 +1,173 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct ingresso
+{
+    int data[10];
+    ingresso *proxi;
+};
+
+struct Node
+{
+    char nome[30];
+    int cpf = 0;
+    ingresso ingresso;
+    Node *prox;
+};
+
+Node *cabeca = nullptr;
+
+void adicionar()
+{
+    Node *novo = new Node;
+
+    printf("Digite o nome: ");
+    scanf("%s", novo->nome);
+    printf("Digite o cpf: ");
+    scanf("%d", &novo->cpf);
+    printf("Digite a data do ingresso: ");
+    scanf("%d", &novo->ingresso.data);
+    novo->prox = nullptr;
+
+    if (cabeca == nullptr)
+    {
+        cabeca = novo;
+    }
+    else
+    {
+        Node *aux = cabeca;
+        while (aux->prox != nullptr)
+        {
+            aux = aux->prox;
+        }
+        aux->prox = novo;
+    }
+}
+
+void imprimir()
+{
+    Node *aux = cabeca;
+    while (aux != nullptr)
+    {
+        printf("Nome: %s\nCpf: %d \nIngressos: %d", aux->nome, aux->cpf, aux->ingresso);
+        aux = aux->prox;
+    }
+}
+
+Node *buscar()
+{
+    Node *aux = cabeca;
+    int cpf = 0;
+    printf("Digite o cpf: ");
+    scanf("%d", cpf);
+
+    while (aux != nullptr)
+    {
+        if (aux->cpf == cpf)
+        {
+            return aux;
+        }
+        aux = aux->prox;
+    }
+    printf("O cpf digitado nao existe!!");
+    return nullptr;
+}
+
+void inserir_ingresso()
+{
+    Node *aux = buscar();
+    if (aux->cpf != NULL)
+    {
+        printf("Esse cpf ja possui um ou mais ingressos.\n");
+    }
+    int bilhete = 0;
+    printf("Digite a data do novo ingresso: ");
+    scanf("%d", &bilhete);
+    while (aux->ingresso.data){
+        
+    }
+}
+
+void insertionSort()
+{
+    Node *ordenar = nullptr;
+    Node *aux = cabeca;
+    while (aux != nullptr)
+    {
+        Node *next = aux->prox;
+        if (ordenar == nullptr || aux->ingresso.data < ordenar->ingresso.data)
+        {
+            // Insere o nó no começo da lista ordenada
+            aux->prox = ordenar;
+            ordenar = aux;
+        }
+        else
+        {
+            // Procura a posição correta na lista ordenada
+            Node *temp = ordenar;
+            while (temp->prox != nullptr && temp->prox->ingresso.data < aux->ingresso.data)
+            {
+                temp = temp->prox;
+            }
+            // Insere o nó na posição correta
+            aux->prox = temp->prox;
+            temp->prox = aux;
+        }
+        // Avança para o próximo nó da lista original
+        aux = next;
+    }
+    // Atualiza o ponteiro para o primeiro nó da lista original
+    cabeca = ordenar;
+}
+
+/*
+void deletar()
+{
+    Node *aux = cabeca;
+    while (aux != nullptr)
+    {
+        Node *next = aux->prox;
+        delete aux;
+        aux = next;
+    }
+    cabeca = nullptr;
+}
+*/
+
+int main(int argc, char const *argv[])
+{
+    int op = 0;
+
+    do
+    {
+        printf("----- MENU -----\n");
+        printf("1 - Opcao 1\n");
+        printf("2 - Opcao 2\n");
+        printf("3 - Opcao 3\n");
+        printf("0 - Sair\n");
+
+        printf("Digite a opcao desejada: ");
+        scanf("%d", &op);
+
+        switch (op)
+        {
+        case 1:
+            adicionar();
+            break;
+        case 2:
+            imprimir();
+            break;
+        case 3:
+            inserir_ingresso();
+            break;
+        case 0:
+            printf("Saindo...\n");
+            break;
+        default:
+            printf("Opcao invalida.\n");
+        }
+    } while (op != 0);
+
+    return 0;
+}
