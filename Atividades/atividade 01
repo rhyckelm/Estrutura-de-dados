@@ -1,1 +1,253 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
+typedef struct cel
+{
+  char nome[100];
+  struct cel *prox = nullptr;
+} celula;
+
+celula *cabeca = nullptr;
+
+celula *anterior(celula *cel)
+{
+  if (cel == cabeca)
+  {
+    return nullptr;
+  }
+
+  celula *ant = cabeca;
+  while (ant != nullptr)
+  {
+    if (ant->prox == cel)
+    {
+      return ant;
+    }
+    ant = ant->prox;
+  }
+  return nullptr;
+}
+
+void swap(celula *cel1, celula *cel2)
+{
+  if ((cel1 == nullptr) || (cel2 == nullptr))
+    return;
+
+  celula *ant1 = nullptr;
+  celula *ant2 = nullptr;
+
+  celula *tmp = nullptr;
+
+  if ((cabeca == cel2) || (cel2->prox == cel1))
+  {
+    tmp = cel2;
+    cel2 = cel1;
+    cel1 = tmp;
+  }
+
+  if (cabeca != cel1)
+  {
+    ant1 = anterior(cel1);
+  }
+
+  ant2 = anterior(cel2);
+
+  if (cel1 != cel2)
+  {
+    tmp = cel2->prox;
+
+    if (ant1 != nullptr)
+    {
+      ant1->prox = cel2;
+    }
+
+    if (cel1 != ant2)
+    {
+      ant2->prox = cel1;
+      cel2->prox = cel1->prox;
+
+      if (cel2->prox == cel1)
+      {
+        cel1->prox = cel2;
+      }
+      else
+      {
+        cel1->prox = tmp;
+      }
+    }
+    else
+    {
+      cel2->prox = cel1;
+      cel1->prox = tmp;
+    }
+
+    if (cabeca == cel1)
+    {
+      cabeca = cel2;
+    }
+  }
+}
+
+void imprimir()
+{
+  celula *aux = cabeca;
+  int i = 0;
+  while (aux != nullptr)
+  {
+    // if (aux == aux->prox) {
+    //   printf("%s -> ", aux->nome);
+    //   printf("ops");
+    //   return;
+    // }
+    i++;
+    if (i > 10)
+    {
+      exit(0);
+    }
+    printf("%s -> ", aux->nome);
+    aux = aux->prox;
+  }
+  printf("NULL\n");
+}
+
+celula *inserir_inicio(const char *n)
+{
+  celula *nova = (celula *)malloc(sizeof(celula));
+  strcpy(nova->nome, n);
+  nova->prox = cabeca;
+  cabeca = nova;
+  return nova;
+}
+
+int length(celula *cabeca)
+{
+  celula *aux = cabeca;
+  int cont = 0;
+  while (aux != nullptr)
+  {
+    aux = aux->prox;
+    cont++;
+  }
+  return cont;
+}
+
+celula *pos(int p)
+{
+  celula *aux = cabeca;
+  int cont = 0;
+  while (aux != nullptr)
+  {
+    if (cont == p)
+    {
+      return aux;
+    }
+    aux = aux->prox;
+    cont++;
+  }
+  return nullptr;
+}
+
+void shuffle()
+{
+  int size = length(cabeca);
+  for (int i = 0; i < size; i++)
+  {
+    celula *cel1 = pos(rand() % size);
+    celula *cel2 = pos(rand() % size);
+    swap(cel1, cel2);
+  }
+}
+// 8 -> 9 -> 7 -> 6
+//  8 -> 7 -> 9 -> 6
+// aux = 9
+// aux_2 = 7
+// ant =  8
+void bubble_sort()
+{
+  celula *aux = cabeca, *ant = nullptr;
+  int size = length(cabeca);
+  if (aux != nullptr)
+  {
+    for (int i = 0; i < size - 1; i++)
+    {
+      while (aux->prox != nullptr)
+      {
+        // 9 -> 8 -> 1
+        // 8 -> 9 -> 1
+        if (strcmp(aux->nome, aux->prox->nome) < 0)
+        {
+          celula *aux_2 = aux->prox;
+          aux->prox = aux_2->prox;
+          aux_2->prox = aux;
+          // cabeca
+          if (ant == nullptr)
+          {
+            cabeca = aux_2;
+          } // half
+          else
+          {
+            ant->prox = aux_2;
+          }
+
+          ant = aux_2;
+        }
+        else
+        {
+          ant = aux;
+          aux = aux->prox;
+        }
+      }
+    }
+  }
+}
+
+void selection_sort()
+{
+  int num = 0;
+  celula *aux = cabeca;
+  celula *aux2 = aux;
+  int size = length(cabeca);
+  if (aux != nullptr)
+  {
+    for (int j = 0; j < size; j++)
+    {
+      if (strcmp(aux2->nome, aux->prox->nome) > 0)
+      {
+        aux = aux->prox;
+        num++;
+        printf("%d", num);
+      }
+      else
+      {
+        aux2 = aux->prox;
+        num++;
+        printf("%d", num);
+      }
+    }
+    if (strcmp(aux2->nome, aux->nome) < 0)
+    {
+      celula *ant = aux;
+      aux = aux2;
+      aux2->prox = ant;
+    }
+  }
+}
+
+int main()
+{
+  srand(time(nullptr));
+
+  inserir_inicio("Leo");
+  inserir_inicio("Barbara");
+  inserir_inicio("Harry");
+  inserir_inicio("Carlos");
+  inserir_inicio("Pedro");
+
+  imprimir();
+  selection_sort();
+  // imprimir();
+
+  return 0;
+}
