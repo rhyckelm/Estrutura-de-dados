@@ -1,1 +1,188 @@
+#include <iostream>
 
+using namespace std;
+
+// Definir a estrutura do nó da árvore
+struct No
+{
+  int valor;
+  No *esquerda;
+  No *direita;
+};
+
+// Função para criar um novo nó
+No *novoNo(int valor)
+{
+  No *no = new No();
+  no->valor = valor;
+  no->esquerda = NULL;
+  no->direita = NULL;
+  return no;
+}
+
+// Função para inserir um novo valor na árvore
+No *inserir(No *raiz, int valor)
+{
+  // Se a raiz for nula, criar um novo nó com o valor e retorná-lo
+  if (raiz == NULL)
+  {
+    return novoNo(valor);
+  }
+  // Caso contrário, percorrer a árvore recursivamente para encontrar o lugar correto para inserir o valor
+  if (valor < raiz->valor)
+  {
+    raiz->esquerda = inserir(raiz->esquerda, valor);
+  }
+  else if (valor > raiz->valor)
+  {
+    raiz->direita = inserir(raiz->direita, valor);
+  }
+  return raiz;
+}
+
+// Função para imprimir o maior elemento da árvore
+void maior_e_menor(No *raiz)
+{
+  if (raiz == NULL)
+  {
+    cout << "Árvore vazia!" << endl;
+    return;
+  }
+  while (raiz->direita != NULL)
+  {
+    raiz = raiz->direita;
+  }
+  cout << "O maior elemento é: " << raiz->valor << endl;
+  while (raiz->esquerda != NULL)
+  {
+    raiz = raiz->esquerda;
+  }
+  cout << "O menor elemento é: " << raiz->valor << endl;
+}
+
+// Função para calcular a soma dos elementos na árvore
+int somar_elementos(No *raiz)
+{
+  if (raiz == NULL)
+  {
+    return 0;
+  }
+  return raiz->valor + somar_elementos(raiz->esquerda) + somar_elementos(raiz->direita);
+}
+
+// Função para calcular o número de elementos na árvore
+int num_elementos(No *raiz)
+{
+  if (raiz == NULL)
+  {
+    return 0;
+  }
+  return 1 + num_elementos(raiz->esquerda) + num_elementos(raiz->direita);
+}
+
+// Função para imprimir a média dos elementos na árvore
+void imprimir_media(No *raiz)
+{
+  if (raiz == NULL)
+  {
+    cout << "Árvore vazia!" << endl;
+    return;
+  }
+  int soma = somar_elementos(raiz);
+  int numero = num_elementos(raiz);
+  float media = (float)soma / numero;
+  cout << "A média dos elementos é: " << media << endl;
+}
+
+No *buscar_no(No *cabeca, int valor)
+{
+  if (cabeca == NULL)
+  {
+    cout << "Valor não encontrado na árvore!" << endl;
+    return NULL;
+  }
+  if (cabeca->valor == valor)
+  {
+    return cabeca;
+  }
+  if (valor < cabeca->valor)
+  {
+    return buscar_no(cabeca->esquerda, valor);
+  }
+  return buscar_no(cabeca->direita, valor);
+}
+
+// Função para calcular a altura de um nó na árvore
+int altura_no(No *no)
+{
+  if (no == NULL)
+  {
+    return -1;
+  }
+  int alturaEsquerda = altura_no(no->esquerda);
+  int alturaDireita = altura_no(no->direita);
+  return 1 + max(alturaEsquerda, alturaDireita);
+}
+
+void trocar_nos(No *no1, No *no2)
+{
+  // Verifica se ambos os nós são diferentes de NULL
+  if (no1 != NULL && no2 != NULL)
+  {
+    // Troca os valores dos nós
+    int temp = no1->valor;
+    no1->valor = no2->valor;
+    no2->valor = temp;
+  }
+}
+
+// Programa principal
+int main(int argc, char **argv)
+{
+  No *cabeca = NULL;
+  int op = 0;
+
+  do
+  {
+    printf("----- MENU -----\n");
+    printf("1 - inserir nó.");
+    printf("2 - Imprimir maior, menor e media.\n");
+    printf("3 - Retornar a altura do nó.\n");
+    printf("4 - Trocar nó.\n");
+    printf("0 - Sair\n");
+
+    printf("Digite a opcao desejada: ");
+    scanf("%d", &op);
+
+    switch (op)
+    {
+    case 1:
+      cabeca = inserir(cabeca, 30);
+      inserir(cabeca, 20);
+      inserir(cabeca, 40);
+      inserir(cabeca, 70);
+      inserir(cabeca, 60);
+      inserir(cabeca, 80);
+      break;
+    case 2:
+      maior_e_menor(cabeca);
+      imprimir_media(cabeca);
+      break;
+    case 3:
+      No *no = buscar_no(cabeca, 70);
+      cout << "A altura do no é: " << altura_no(no) << endl;
+      break;
+    case 4:
+      No *no1 = buscar_no(cabeca, 30);
+      No *no2 = buscar_no(cabeca, 80);
+      trocar_nos(no1, no2);
+    case 0:
+      printf("Saindo...\n");
+      break;
+    default:
+      printf("Opcao invalida.\n");
+    }
+  } while (op != 0);
+
+  return 0;
+}
