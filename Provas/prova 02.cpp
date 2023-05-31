@@ -1,13 +1,13 @@
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <time.h>
-#include <stdbool.h>
 
 enum Cor
 {
-  VERMELHO,
-  PRETO
+  VERMELHO = 1,
+  PRETO = 0
 };
 
 typedef struct node
@@ -24,77 +24,86 @@ No *criar_no(int num)
   No *node = (No *)malloc(sizeof(No));
 
   node->num = num;
+  node->pai = NULL;
   node->esq = NULL;
   node->dir = NULL;
+  node->cor = VERMELHO;
 
   return node;
 }
 
-int eh_vermelho(No *node)
+void rot_esq(No **raiz, No *atual)
 {
-  if (node == NULL)
-  {
-    return 0;
-  }
-
-  return node->cor == VERMELHO ? 1 : 0;
-}
-
-void pintar(No *node)
-{
-  if (node->dir != NULL && node->dir->cor == VERMELHO)
-  {
-    return;
-  }
-
-  if (node->esq != NULL && node->esq->cor == VERMELHO)
-  {
-    return;
-  }
-
-  node->cor = VERMELHO;
-  if (node->dir != NULL)
-    node->dir->cor = PRETO;
-  if (node->esq != NULL)
-    node->esq->cor = PRETO;
-}
-
-void rot_esq(No **node)
-{
-  No *atual = *node;
   No *filho = atual->dir;
   if (filho == NULL)
   {
     fprintf(stderr, "Rotação errada\n");
     return;
   }
-
   atual->dir = filho->esq;
+  if (filho->esq != NULL)
+  {
+    filho->esq->pai = atual;
+  }
+
   filho->esq = atual;
-  filho->cor = atual->cor;
-  atual->cor = VERMELHO;
-  *node = filho;
+  filho->pai = atual->pai;
+  atual->pai = filho;
+
+  if (filho->pai == NULL)
+  {
+    *raiz = filho;
+    filho->cor = PRETO;
+  }
+  else
+  {
+    if (filho->pai->esq == atual)
+    {
+      filho->pai->esq = filho;
+    }
+    else
+    {
+      filho->pai->dir = filho;
+    }
+    return;
+  }
 }
 
-void rot_dir(No **node)
+void rot_dir(No **raiz, No *atual)
 {
-  No *atual = *node;
   No *filho = atual->esq;
   if (filho == NULL)
   {
     fprintf(stderr, "Rotação errada\n");
     return;
   }
-
   atual->esq = filho->dir;
   if (filho->dir != NULL)
+  {
     filho->dir->pai = atual;
+  }
 
   filho->dir = atual;
-  filho->cor = atual->cor;
-  atual->cor = VERMELHO;
-  *node = filho;
-  atual->pai = filho; // Atualização do pai após a rotação
+  filho->pai = atual->pai;
+  atual->pai = filho;
+
+  if (filho->pai == NULL)
+  {
+    *raiz = filho;
+    filho->cor = PRETO;
+  }
+  else
+  {
+    if (filho->pai->dir == atual)
+    {
+      filho->pai->dir = filho;
+    }
+    else
+    {
+      filho->pai->esq = filho;
+    }
+    return;
+  }
 }
 
 void inserir_no(No **node, No *novo)
@@ -135,15 +144,6 @@ void inserir_no(No **node, No *novo)
       inserir_no(&(*node)->esq, novo);
     }
   }
-
-  if (eh_vermelho((*node)->dir) && !eh_vermelho((*node)->esq))
-    rot_esq(node);
-
-  if (eh_vermelho((*node)->esq) && eh_vermelho((*node)->esq->esq))
-    rot_dir(node);
-
-  if (eh_vermelho((*node)->dir) && eh_vermelho((*node)->esq))
-    pintar(*node);
 }
 
 void imprimir(No *node, int tab = 0)
@@ -156,156 +156,331 @@ void imprimir(No *node, int tab = 0)
   {
     printf("\t");
   }
-  printf("%d\n", node->num);
+  printf("%d %d\n", node->num, node->cor);
   imprimir(node->esq, tab + 1);
 }
 
-void remover_no(No **raiz, int num)
+void remover_no(No **raiz, No *no_remover)
 {
   if (*raiz == NULL)
   {
-    printf("A árvore está vazia.\n");
     return;
   }
-
   // Encontrar o nó a ser removido
-  No *atual = *raiz;
-  No *pai = NULL;
-  No *no_remover = NULL;
-  No *filho = NULL;
-
-  while (atual != NULL)
+  if (no_remover->pai->dir == no_remover)
   {
-    if (num == atual->num)
+    no_remover->pai->dir = no_remover->esq;
+    if (no_remover->esq != NULL)
     {
-      no_remover = atual;
-      break;
+      no_remover->esq->pai = no_remover->pai;
     }
 
-    pai = atual;
-
-    if (num < atual->num)
-      atual = atual->esq;
-    else
-      atual = atual->dir;
-  }
-
-  if (no_remover == NULL)
-  {
-    printf("O nó não foi encontrado na árvore.\n");
     return;
   }
-
-  // Determinar o filho do nó a ser removido
-  if (no_remover->esq != NULL)
-    filho = no_remover->esq;
   else
-    filho = no_remover->dir;
-
-  if (filho != NULL)
-    filho->pai = pai;
-
-  // Remover o nó da árvore
-  if (pai == NULL)
-    *raiz = filho;
-  else if (no_remover == pai->esq)
-    pai->esq = filho;
-  else
-    pai->dir = filho;
-
-  free(no_remover);
+  {
+    no_remover->pai->esq = no_remover->dir;
+    if (no_remover->dir != NULL)
+    {
+      no_remover->dir->pai = no_remover->pai;
+    }
+    return;
+  }
 }
 
-void balanceamento(No **raiz)
+void remocao(No **raiz, No *node)
 {
-  No *node = *raiz;
-
-  while (node != NULL && node != *raiz && node->cor == PRETO)
+  // 1
+  if (node->cor == VERMELHO)
   {
-    No *pai = node->pai;
-    No *irmao;
-
-    if (node == pai->esq)
+    printf("\nVERMELHO\n");
+    remover_no(raiz, node);
+    return;
+  }
+  // 2.1
+  No *irmao = NULL;
+  if (node->pai->dir != node && node->pai->dir != NULL && node->pai->dir->cor == PRETO)
+  {
+    irmao = node->pai->dir;
+    if (irmao->dir == NULL && irmao->esq == NULL)
     {
-      irmao = pai->dir;
-
-      if (irmao->cor == VERMELHO)
+      node->pai->cor = PRETO;
+      irmao->cor = VERMELHO;
+      remover_no(raiz, node);
+      return;
+    }
+    else if (irmao->dir == NULL && irmao->esq != NULL && irmao->esq->cor == VERMELHO)
+    {
+      node->pai->cor = PRETO;
+      irmao->cor = VERMELHO;
+      remover_no(raiz, node);
+      return;
+    }
+  }
+  else if (node->pai->esq != node && node->pai->esq != NULL && node->pai->esq->cor == PRETO)
+  {
+    irmao = node->pai->esq;
+    if (irmao->dir == NULL && irmao->esq == NULL)
+    {
+      node->pai->cor = PRETO;
+      irmao->cor = VERMELHO;
+      remover_no(raiz, node);
+      return;
+    }
+    else if (irmao->esq == NULL && irmao->dir != NULL && irmao->dir->cor == VERMELHO)
+    {
+      node->pai->cor = PRETO;
+      irmao->cor = VERMELHO;
+      remover_no(raiz, node);
+      return;
+    }
+  }
+  // 2.2
+  if (node->pai->esq != node && node->pai->esq != NULL && node->pai->esq->cor == PRETO)
+  {
+    irmao = node->pai;
+    if (irmao->esq->cor == VERMELHO)
+    {
+      if (node->pai->cor == PRETO)
       {
-        // Caso 1: Irmão vermelho
-        irmao->cor = PRETO;
-        pai->cor = VERMELHO;
-        rot_esq(&pai);
-        irmao = pai->dir;
-      }
-
-      if ((irmao->esq == NULL || irmao->esq->cor == PRETO) &&
-          (irmao->dir == NULL || irmao->dir->cor == PRETO))
-      {
-        // Caso 2: Pai, irmão e sobrinhos pretos
-        irmao->cor = VERMELHO;
-        node = pai;
+        irmao->esq->cor = PRETO;
       }
       else
       {
-        if (irmao->dir == NULL || irmao->dir->cor == PRETO)
-        {
-          // Caso 3: Pai esquerdo, sobrinho direito preto
-          irmao->esq->cor = PRETO;
-          irmao->cor = VERMELHO;
-          rot_dir(&irmao);
-          irmao = pai->dir;
-        }
-
-        // Caso 4: Sobrinho direito vermelho
-        irmao->cor = pai->cor;
-        pai->cor = PRETO;
+        irmao->esq->cor = VERMELHO;
+      }
+      rot_dir(raiz, node->pai);
+      remover_no(raiz, node);
+      return;
+    }
+  }
+  else if (node->pai->dir != node && node->pai->dir != NULL && node->pai->dir->cor == PRETO)
+  {
+    irmao = node->pai;
+    if (irmao->dir->cor == VERMELHO)
+    {
+      if (node->pai->cor == PRETO)
+      {
         irmao->dir->cor = PRETO;
-        rot_esq(&pai);
-        node = *raiz;
+      }
+      else
+      {
+        irmao->dir->cor = VERMELHO;
+      }
+      rot_esq(raiz, node->pai);
+      remover_no(raiz, node);
+      return;
+    }
+  }
+  /// 2.3
+  if (node->pai->esq != node && node->pai->esq != NULL && node->pai->esq->cor == VERMELHO)
+  {
+    rot_dir(raiz, node->pai);
+    remover_no(raiz, node);
+    if (node->pai->cor == PRETO)
+    {
+      node->pai->esq->cor = VERMELHO;
+    }
+    return;
+  }
+  else if (node->pai->dir != node && node->pai->dir != NULL && node->pai->dir->cor == VERMELHO)
+  {
+    rot_esq(raiz, node->pai);
+    remover_no(raiz, node);
+    if (node->pai->cor == PRETO)
+    {
+      node->pai->dir->cor = VERMELHO;
+    }
+    return;
+  }
+}
+
+No *maior(No *node)
+{
+  if (node == NULL)
+    return NULL;
+  if (node->dir == NULL)
+    return node;
+  return maior(node->dir);
+}
+
+No *menor(No *node)
+{
+  if (node == NULL)
+    return NULL;
+  if (node->esq == NULL)
+    return node;
+  return menor(node->esq);
+}
+
+void remocao_de_fato(No **raiz, No *node, int num)
+{
+  if (node == NULL)
+  {
+    return;
+  }
+
+  remocao_de_fato(raiz, (node)->esq, num);
+  remocao_de_fato(raiz, (node)->dir, num);
+
+  No *removido = node;
+  No *aux = NULL;
+  if (node->num == num)
+  {
+
+    aux = maior(node->esq);
+
+    if (aux == NULL)
+    {
+      aux = menor(node->dir);
+    }
+    if (aux == NULL)
+    {
+      aux = removido;
+    }
+    // ele é o proprio caso
+    if (removido == aux)
+    {
+      if (removido->pai == NULL)
+      {
+        *raiz = NULL;
+        return;
+      }
+      else
+      {
+        remocao(raiz, removido);
+
+        return;
       }
     }
     else
     {
-      irmao = pai->esq;
+      // não é o proprio caso, existe um maior ou menor
+      remocao(raiz, aux);
 
-      if (irmao->cor == VERMELHO)
+      aux->pai = removido->pai;
+      aux->esq = removido->esq;
+      aux->dir = removido->dir;
+      aux->cor = removido->cor;
+
+      if (removido->esq != NULL)
       {
-        // Caso 1: Irmão vermelho
-        irmao->cor = PRETO;
-        pai->cor = VERMELHO;
-        rot_esq(&pai);
-        irmao = pai->esq;
+        removido->esq->pai = aux;
       }
 
-      if ((irmao->esq == NULL || irmao->esq->cor == PRETO) &&
-          (irmao->dir == NULL || irmao->dir->cor == PRETO))
+      if (removido->dir != NULL)
       {
-        // Caso 2: Pai, irmão e sobrinhos pretos
-        irmao->cor = VERMELHO;
-        node = pai;
+        removido->dir->pai = aux;
+      }
+      if (removido->pai == NULL)
+      {
+        *raiz = aux;
+        aux->cor = PRETO;
       }
       else
       {
-        if (irmao->esq == NULL || irmao->esq->cor == PRETO)
+        if (removido->pai->dir == removido)
         {
-          // Caso 3: Pai direito, sobrinho esquerdo preto
-          irmao->dir->cor = PRETO;
-          irmao->cor = VERMELHO;
-          rot_esq(&irmao);
-          irmao = pai->esq;
+          removido->pai->dir = aux;
         }
-
-        // Caso 4: Sobrinho esquerdo vermelho
-        irmao->cor = pai->cor;
-        pai->cor = PRETO;
-        irmao->esq->cor = PRETO;
-        rot_dir(&pai);
-        node = *raiz;
+        else
+        {
+          removido->pai->esq = aux;
+        }
       }
+      return;
     }
   }
-  if (node != NULL)
+}
+
+void balanceamento(No **raiz, No *node)
+{
+  if (node->pai == NULL)
+  {
     node->cor = PRETO;
+    return;
+  }
+
+  if (node->pai->cor == PRETO)
+  {
+
+    return;
+  }
+
+  No *avo = node->pai->pai;
+  No *tio = NULL;
+  if (avo->dir != node->pai)
+  {
+    tio = avo->dir;
+  }
+  if (avo->esq != node->pai)
+  {
+    tio = avo->esq;
+  }
+
+  if (tio != NULL)
+  {
+    if (tio->cor == VERMELHO && node->pai->cor == VERMELHO)
+    {
+      tio->cor = PRETO;
+      node->pai->cor = PRETO;
+      if (avo->pai != NULL)
+      {
+        avo->cor = VERMELHO;
+      }
+      return;
+    }
+  }
+  if ((tio == NULL && node->pai->cor == VERMELHO) ||
+      ((tio->cor == PRETO) && node->pai->cor == VERMELHO))
+  {
+
+    if (node->pai == avo->esq && node == node->pai->esq)
+    {
+      rot_dir(raiz, avo);
+      node->pai->cor = PRETO;
+      avo->cor = VERMELHO;
+      return;
+    }
+    if (node->pai == avo->dir && node == node->pai->dir)
+    {
+      rot_esq(raiz, avo);
+      node->pai->cor = PRETO;
+      avo->cor = VERMELHO;
+      return;
+    }
+    if (node->pai == avo->esq && node == node->pai->dir)
+    {
+      rot_esq(raiz, node->pai);
+      rot_dir(raiz, avo);
+      node->cor = PRETO;
+      avo->cor = VERMELHO;
+      return;
+    }
+    if (node->pai == avo->dir && node == node->pai->esq)
+    {
+      rot_dir(raiz, node->pai);
+      rot_esq(raiz, avo);
+      node->cor = PRETO;
+      avo->cor = VERMELHO;
+      return;
+    }
+  }
+}
+
+void balanceamento_total(No **raiz, No *node)
+{
+  if (node == NULL)
+  {
+    return;
+  }
+
+  if (node->cor == VERMELHO)
+  {
+    balanceamento(raiz, node);
+  }
+  balanceamento_total(raiz, node->dir);
+  balanceamento_total(raiz, node->esq);
 }
 
 void imprimir_cores(No *node)
@@ -318,37 +493,61 @@ void imprimir_cores(No *node)
   if (node->cor == VERMELHO)
     printf("Nó %d: Vermelho\n", node->num);
   else
+  {
     printf("Nó %d: Preto\n", node->num);
+  }
 
   imprimir_cores(node->dir);
 }
 
 int main(int argc, char const *argv[])
 {
-  srand(time(NULL));
+  int op = 0;
+  No *root = NULL;
+  No *no = NULL;
+  int num = 0;
 
-  No *no = criar_no(5);
-  No *root = no;
+  do
+  {
+    printf("----- MENU -----\n");
+    printf("1 - Inserir no.\n");
+    printf("2 - Imprimir arvore.\n");
+    printf("3 - Remover no.\n");
+    printf("0 - Sair\n");
 
-  no = criar_no(6);
-  inserir_no(&root, no);
-  no = criar_no(4);
-  inserir_no(&root, no);
-  no = criar_no(8);
-  inserir_no(&root, no);
-  no = criar_no(1);
-  inserir_no(&root, no);
-  no = criar_no(3);
-  inserir_no(&root, no);
-  no = criar_no(7);
-  inserir_no(&root, no);
+    printf("Opcao: ");
+    scanf("%d", &op);
 
-  imprimir(root);
-  balanceamento(&root);
-  imprimir(root);
-  imprimir_cores(root);
+    switch (op)
+    {
+    case 1:
+      printf("Digite um numero: ");
+      scanf("%d", &num);
+      no = criar_no(num);
+      inserir_no(&root, no);
+      balanceamento_total(&root, root);
+      break;
 
-  printf("================\n");
+    case 2:
+      imprimir(root);
+      break;
+
+    case 3:
+      printf("Digite o numero a ser removido: ");
+      scanf("%d", &num);
+      remocao_de_fato(&root, root, num);
+      balanceamento_total(&root, root);
+      break;
+
+    case 0:
+      printf("Saindo...\n");
+      break;
+
+    default:
+      printf("Opcao invalida\n");
+      break;
+    }
+  } while (op != 0);
 
   return 0;
 }
